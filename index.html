@@ -1,0 +1,236 @@
+<html>
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+    
+
+<script>
+    // canvas variables
+    const canvas = document.getElementById('gameCanvas')
+    const cc = canvas.getContext('2d')
+
+    // BAckground
+    var BackGround = 'black'
+
+    //ball variables
+    var BSX = 10
+    var BSY = 5
+    var ballx = 50
+    var bally = 50
+
+    //paddle variables
+    var p1y = 250
+    const PaddleHeight = 100
+
+    //cpu paddle var
+    var p2y = 250
+    const PW = 10
+
+    // cpu/player
+    var Pscore = 0
+    var CPUscore = 0
+    const WINSCORE = 5
+
+    var WINSCREEN = false
+
+
+    // mouse finding
+
+    function calculateMousePos(evt) {
+        var rect = canvas.getBoundingClientRect()
+        var root = document.documentElement
+        var mousex = evt.clientX - rect.left - root.scrollLeft
+        var mousey = evt.clientY - rect.top - root.scrollTop
+        return {
+            x:mousex,
+            y:mousey
+        }
+    }
+
+    function handleMouseClick(evt) {
+        if(WINSCREEN){
+            Pscore = 0
+            CPUscore = 0
+            WINSCREEN = false
+        }
+
+    }
+   
+    window.onload = function() {
+        
+        var FPS = 30
+
+        // interval
+        setInterval (function() { 
+            moveit()
+            drawEverything()
+        }, 1000/FPS )
+
+window.onkeyup = function(p) {
+   var key = p.keyCode ? p.keyCode : p.which;
+   if (key == 80) {
+       WINSCREEN = true
+   }
+        canvas.addEventListener('mousedown',handleMouseClick)
+
+        // mouse pos
+        canvas.addEventListener('mousemove',
+        function(evt) {
+            var mousePos = calculateMousePos(evt)
+            p1y = mousePos.y-(PaddleHeight/2)
+        })
+
+    }
+    
+    // reseting the ball
+    function ballReset() {
+        if( Pscore >= WINSCORE || CPUscore >= WINSCORE ) 
+        {
+            WINSCREEN = true
+        }
+
+        BackGround = 'red'
+        setTimeout(function() {
+            BackGround = 'black'
+        }, 50)
+
+        BSX = -BSX
+        ballx = canvas.width/2
+        bally = canvas.height/2
+    }
+
+    function computerMovement() {
+        var p2ycenter = p2y + (PaddleHeight/2)
+        if(p2ycenter < bally - 35) {
+            p2y += 6 
+        } else if
+            (p2ycenter > bally + 35) 
+            {
+            p2y -= 6
+        }
+    }
+
+    // moving things
+    function moveit() {
+
+        computerMovement()
+
+        if(WINSCREEN) {
+        return
+        }
+
+        //ballx += BSX makes it move
+        ballx += BSX
+
+        //bally += BSY makes it move
+        bally += BSY
+
+        if(ballx > canvas.width) 
+        { 
+            if (bally > p2y && bally < p2y+PaddleHeight) 
+            {
+                BSX = -BSX
+                var deltay = bally - (p2y + PaddleHeight/2)
+
+                //deltay is the angle it bounces of the paddle
+                BSY = deltay * 0.35
+            }
+            else
+            {
+                //has to be before ball reset
+                Pscore = Pscore + 1
+                ballReset()
+            }
+        }
+        
+        if(ballx < 0) 
+        {
+            if (bally > p1y && bally < p1y+PaddleHeight) 
+            {
+                BSX = -BSX
+                var deltay = bally - (p1y + PaddleHeight/2)
+                BSY = deltay * 0.35
+            } 
+            else
+            {
+                CPUscore = CPUscore + 1
+                ballReset()
+            }
+        }
+
+        if(bally > canvas.height) {
+            BSY = -BSY
+        }
+        
+        if(bally < 0) {
+            BSY = -BSY
+        }
+
+    }
+
+    function drawNet(){ 
+
+        for(var i=0;i<canvas.height; i+=40){
+            colourRect(canvas.width/2-1,i,2,20,'white')
+        }
+        
+    }
+
+    function drawEverything() {
+        
+        // background
+        colourRect(0,0,canvas.width,canvas.height, BackGround, 'black')
+
+        if(WINSCREEN) {
+
+        cc.fillStyle = 'white'
+
+            if( Pscore >= WINSCORE){
+
+            cc.fillText("You Win!", 350, 200)
+
+            } else if(CPUscore >= WINSCORE ) {
+
+            cc.fillText("You Lost ):", 350, 200)
+
+            
+
+            }
+                  
+            
+            cc.fillText("click to continue", 350, 500)
+            return
+        }
+
+        //that net in the middle
+        drawNet()      
+
+        // ball
+        colourCircle(ballx, bally, 10, 'white')
+
+        // paddle
+        colourRect(0,p1y,PW,PaddleHeight,'white')
+
+        // cpu paddle
+        colourRect(canvas.width-PW,p2y,PW,PaddleHeight,'white')
+
+
+        // scores
+        cc.fillText(Pscore, 100,100)
+        cc.fillText(CPUscore, 800 - 100, 100)
+    }
+
+    // rectangles
+    function colourRect(leftX,topY, width,height, drawColour) {
+        cc.fillStyle = drawColour
+        cc.fillRect(leftX,topY, width,height)
+    }
+
+    // circles
+    function colourCircle(centerX, centerY, radius, drawColour) {
+        cc.fillStyle = drawColour
+        cc.beginPath()
+        cc.arc(centerX, centerY, radius, 0,Math.PI*2, true)
+        cc.fill()
+    }
+    }
+</script>
+</html>
